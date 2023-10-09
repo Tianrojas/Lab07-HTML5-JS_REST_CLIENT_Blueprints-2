@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueprints</title>
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+<div id="main-container">
+    <div id="left-panel">
+        <h1 class="text-center text-primary">Blueprints</h1>
+        <!-- Campo para captura del autor -->
+        <div class="form-group">
+            <label for="authorInput" class="text-white">Autor:</label>
+            <input type="text" class="form-control" id="authorInput" placeholder="Nombre del autor">
+        </div>
+
+        <!-- Botón 'Get blueprints' -->
+        <button id="getBlueprintsButton" class="btn btn-custom btn-block">Get blueprints</button>
+
+        <!-- Campo para mostrar el nombre del autor seleccionado -->
+        <p class="text-center text-primary" id="selectedAuthor"></p>
+
+        <!-- Tabla HTML para mostrar el listado de planos -->
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Blueprint name</th>
+                <th>Number of points</th>
+                <!-- Agrega más encabezados aquí si es necesario -->
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Aquí se mostrarán los datos de los planos -->
+            </tbody>
+        </table>
+
+        <!-- Campo para mostrar el total de puntos de los planos del autor -->
+        <p class="text-center text-primary" id="totalPoints"></p>
+    </div>
+
+    <div id="right-panel">
+        <canvas id="blueprintCanvas" width="400" height="400"></canvas>
+        <p class="text-center text-primary" id="blueprintName"></p>
+    </div>
+</div>
+
+<script src="js/apiclient.js"></script>
+<script src="js/apimock.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
