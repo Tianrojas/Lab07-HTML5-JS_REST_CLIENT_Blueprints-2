@@ -44,8 +44,21 @@
     </div>
 
     <div id="right-panel">
+        <div class="row">
+            <div class="col-xs-6">
+                <button id="deleteBlueprintButton" class="btn btn-danger btn-block">DELETE</button>
+            </div>
+        </div>
+        <p class="text-center text-primary my-3" id="blueprintName" style="font-size: 1.2em; margin-top: 20px;"></p>
         <canvas id="blueprintCanvas" width="400" height="400"></canvas>
-        <p class="text-center text-primary" id="blueprintName"></p>
+        <div class="row">
+            <div class="col-xs-6">
+                <button id="saveUpdateButton" class="btn btn-success btn-block">Save/Update</button>
+            </div>
+            <div class="col-xs-6">
+                <button id="createBlueprintButton" class="btn btn-primary btn-block">Create new blueprint</button>
+            </div>
+        </div>
     </div>
 </div>
 

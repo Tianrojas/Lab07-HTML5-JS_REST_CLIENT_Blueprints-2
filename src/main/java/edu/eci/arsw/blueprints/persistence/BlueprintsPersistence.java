@@ -37,4 +37,6 @@ public interface BlueprintsPersistence {
     public Set<Blueprint> getAllBlueprints(int pageNumber) throws BlueprintNotFoundException;
 
     public void setBlueprint(String author,String bprintname,Blueprint bp) throws BlueprintNotFoundException;
+
+    public void deleteBlueprint(String author, String bprintname) throws BlueprintNotFoundException;
 }

@@ -27,11 +27,22 @@ public class BlueprintsServices {
     BlueprintsPersistence bpp=null;
     @Autowired
     BlueprintsFilter bpf;
-    
+
+    /**
+     *
+     * @param bp
+     * @throws BlueprintPersistenceException
+     */
     public void addNewBlueprint(Blueprint bp) throws BlueprintPersistenceException {
         bpp.saveBlueprint(bpf.blueprintsFilter(bp));
     }
-    
+
+    /**
+     *
+     * @param pageNumber
+     * @return
+     * @throws BlueprintNotFoundException
+     */
     public Set<Blueprint> getAllBlueprints(int pageNumber) throws BlueprintNotFoundException {
         return bpp.getAllBlueprints(pageNumber);
     }
@@ -61,12 +72,20 @@ public class BlueprintsServices {
      *
      * @param author blueprint's author
      * @param name blueprint's name
-     * @param points New set of blueprint´s points
+     * @param bp New set of blueprint´s points
      * @throws BlueprintNotFoundException
      */
     public void setBlueprint(String author, String name, Blueprint bp) throws BlueprintNotFoundException {
         bpp.setBlueprint(author, name, bp);
     }
 
-    
+    /**
+     *
+     * @param authorName
+     * @param bpName
+     * @throws BlueprintNotFoundException
+     */
+    public void deleteBlueprint(String authorName, String bpName) throws BlueprintNotFoundException{
+        bpp.deleteBlueprint(authorName,bpName);
+    }
 }

@@ -31,7 +31,7 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
         Point[] pts1=new Point[]{new Point(125, 125),new Point(110, 110),new Point(0, 0)};
         Blueprint bp1=new Blueprint("Sebas", "Blueprint 2",pts1);
         Point[] pts2=new Point[]{new Point(60, 10),new Point(135, 150),new Point(235, 250),new Point(60, 10)};
-        Blueprint bp2=new Blueprint("Andres", "Blueprint 3",pts2);
+        Blueprint bp2=new Blueprint("Andres", "Blueprint 1",pts2);
         Point[] pts3 = new Point[]{
                 new Point(339, 160),
                 new Point(339, 323),
@@ -42,7 +42,7 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
                 new Point(99, 160)
         };
 
-        Blueprint bp3=new Blueprint("Sebas", "Blueprint 4",pts3);
+        Blueprint bp3=new Blueprint("Sebas", "Blueprint 3",pts3);
 
         blueprints.put(new Tuple<>(bp0.getAuthor(),bp0.getName()), bp0);
         blueprints.put(new Tuple<>(bp1.getAuthor(),bp1.getName()), bp1);
@@ -77,7 +77,7 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
     }
     @Override
     public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException {
-        Set<Blueprint> bluePrints = new HashSet<>();
+        Set<Blueprint> bluePrints = new TreeSet<>(Comparator.comparing(Blueprint::getName)); // Utiliza un TreeSet con un comparador personalizado
         for (Map.Entry<Tuple<String, String>, Blueprint> entry : blueprints.entrySet()) {
             if (author.equals(entry.getKey().getElem1())) {
                 bluePrints.add(entry.getValue());
@@ -88,18 +88,23 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
         }
         return bluePrints;
     }
+
     @Override
     public Set<Blueprint> getAllBlueprints(int pageNumber) throws BlueprintNotFoundException {
         int pageSize = 10;
         int startIndex = (pageNumber - 1) * pageSize;
         int endIndex = pageNumber * pageSize;
 
-        Set<Blueprint> bluePrints = new HashSet<>();
+        Set<Blueprint> bluePrints = new TreeSet<>(Comparator.comparing(Blueprint::getName)); // Utiliza un TreeSet con un comparador personalizado
+
         List<Blueprint> blueprintList = new ArrayList<>(blueprints.values());
 
         if (startIndex >= blueprintList.size()) {
             throw new BlueprintNotFoundException("Page not found");
         }
+
+        // Ordena la lista por nombre antes de agregar los elementos al conjunto
+        blueprintList.sort(Comparator.comparing(Blueprint::getName));
 
         for (int i = startIndex; i < Math.min(endIndex, blueprintList.size()); i++) {
             bluePrints.add(blueprintList.get(i));
@@ -109,11 +114,20 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
     }
 
 
+
     @Override
     public void setBlueprint(String author, String bpname, Blueprint nbp) throws BlueprintNotFoundException {
         Blueprint bp = getBlueprint(author, bpname);
         bp.setPoints(nbp.getPoints());
     }
 
+    @Override
+    public void deleteBlueprint(String author, String bprintname) throws BlueprintNotFoundException {
+        Tuple<String, String> key = new Tuple<>(author, bprintname);
+        Blueprint removedBlueprint = blueprints.remove(key);
+        if (removedBlueprint == null) {
+            throw new BlueprintNotFoundException("Blueprint not found: " + author + " - " + bprintname);
+        }
+    }
 
 }

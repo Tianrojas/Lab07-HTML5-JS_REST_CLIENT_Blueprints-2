@@ -1,22 +1,33 @@
-// Variable que almacenará la implementación actual
+// Variable to store the current implementation
 var implementation = 'apiclient';
 
-// Comprueba la implementación seleccionada
+// Check the selected implementation
 if (implementation === 'apimock') {
     api = apimock;
 } else if (implementation === 'apiclient') {
     api = apiclient;
 } else {
-    console.error("Implementación no válida: " + implementation);
+    console.error("Invalid implementation: " + implementation);
 }
 
 var app = (function () {
-    var selectedAuthor = "";
+    const table = document.querySelector('table');
+    const tbody = table.querySelector('tbody');
+    const totalPointsElement = document.getElementById('totalPoints');
+    let blueprintNameField = document.getElementById('blueprintName');
+    const canvas = document.getElementById('blueprintCanvas');
+    const getBlueprintsButton = document.getElementById('getBlueprintsButton');
+    const authorNameInput = document.getElementById('authorInput');
+    const saveUpdateButton = document.getElementById('saveUpdateButton');
+    const createBlueprintButton = document.getElementById('createBlueprintButton');
+    const rightPanel = document.getElementById('right-panel')
 
-    // Función privada para agregar filas a la tabla
+    let selectedAuthor = "";
+    let currentBlueprintPoints = [];
+    let currentBlueprintName = "";
+
+
     function addRowToTable(name, points) {
-        var table = document.querySelector('table');
-        var tbody = table.querySelector('tbody');
         var row = document.createElement('tr');
         var nameCell = document.createElement('td');
         var pointsCell = document.createElement('td');
@@ -40,10 +51,7 @@ var app = (function () {
         tbody.appendChild(row);
     }
 
-
-    // Función privada para dibujar un plano
     function drawBlueprint(points) {
-        var canvas = document.getElementById('blueprintCanvas');
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
@@ -55,72 +63,180 @@ var app = (function () {
         ctx.closePath();
     }
 
-    // Operación pública para cambiar el nombre del autor actualmente seleccionado
     function setAuthorName(authorName) {
         selectedAuthor = authorName;
     }
 
-    // Operación pública para actualizar el listado de planos por autor
     function updateBlueprintsList(authorName) {
-        setAuthorName(authorName);
-        var table = document.querySelector('table');
-        var tbody = table.querySelector('tbody');
-        // Eliminar todas las filas del tbody
-        while (tbody.firstChild) {
-            tbody.removeChild(tbody.firstChild);
-        }
-        api.getBlueprintsByAuthor(authorName, function (error, blueprints) {
-            var totalPointsElement = document.getElementById('totalPoints');
-            if (error) {
-                totalPointsElement.textContent = 'author not found';
-            } else {
-                // Procesar los planos exitosamente
-                console.log("Planos obtenidos exitosamente:", blueprints);
-                var mappedBlueprints = blueprints.map(function (bp) {
-                    return {
-                        name: bp.name,
-                        points: bp.points.length
-                    };
-                });
-                var totalPoints = mappedBlueprints.reduce(function (total, bp) {
-                    addRowToTable(bp.name, bp.points);
-                    return total + bp.points;
-                }, 0);
-                totalPointsElement.textContent = 'Total de puntos: ' + totalPoints;
+        return new Promise(function (resolve, reject) {
+            setAuthorName(authorName);
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
             }
-        });
-    }
 
-    // Operación pública para dibujar un plano por nombre de autor y nombre de plano
-    function drawBlueprintByNameAndAuthor(authorName, bpname) {
-        api.getBlueprintsByNameAndAuthor(authorName, bpname, function (blueprint) {
-            if (blueprint) {
-                drawBlueprint(blueprint.points);
-                var blueprintNameField = document.getElementById('blueprintName');
-                if (!blueprintNameField) {
-                    blueprintNameField = document.createElement('p');
-                    blueprintNameField.id = 'blueprintName';
-                    document.getElementById('right-panel').appendChild(blueprintNameField);
+            api.getBlueprintsByAuthor(authorName, function (error, blueprints) {
+                if (error) {
+                    totalPointsElement.textContent = 'Author not found';
+                    reject(error);
+                } else {
+                    console.log("Blueprints obtained successfully:", blueprints);
+                    var mappedBlueprints = blueprints.map(function (bp) {
+                        return {
+                            name: bp.name,
+                            points: bp.points.length
+                        };
+                    });
+                    var totalPoints = mappedBlueprints.reduce(function (total, bp) {
+                        addRowToTable(bp.name, bp.points);
+                        return total + bp.points;
+                    }, 0);
+                    totalPointsElement.innerHTML = '<strong>Total points:</strong> ' + totalPoints;
+                    resolve();
                 }
-                blueprintNameField.textContent = 'Drawn: ' + bpname;
-            }
+            });
+            currentBlueprintPoints = [];
+            drawBlueprint(currentBlueprintPoints);
         });
     }
 
-    // Obtener el botón de consulta por su ID
-    var getBlueprintsButton = document.getElementById('getBlueprintsButton');
+    function drawBlueprintByNameAndAuthor(authorName, bpname) {
+        return new Promise(function (resolve, reject) {
+            api.getBlueprintsByNameAndAuthor(authorName, bpname, function (blueprint) {
+                if (blueprint) {
+                    drawBlueprint(blueprint.points);
+                    setCurrentBlueprintName(bpname);
+                    if (!blueprintNameField) {
+                        blueprintNameField = document.createElement('p');
+                        blueprintNameField.id = 'blueprintName';
+                        rightPanel.appendChild(blueprintNameField);
+                    }
+                    blueprintNameField.innerHTML = '<strong>Drawn:</strong> ' + bpname;
+                    resolve();
+                } else {
+                    reject("Blueprint not found");
+                }
+            });
+        });
+    }
 
-    // Asociar la operación updateBlueprintsList al evento 'click' del botón
-    getBlueprintsButton.addEventListener('click', function () {
-        // Obtener el nombre del autor desde el campo de entrada
-        var authorNameInput = document.getElementById('authorInput');
-        var authorName = authorNameInput.value;
+    function setCurrentBlueprintName(name) {
+        currentBlueprintName = name;
+    }
 
-        // Llamar a la operación updateBlueprintsList con el nombre del autor
-        updateBlueprintsList(authorName);
+    canvas.addEventListener('click', function (event) {
+        if (event.clientX !== undefined && event.clientY !== undefined) {
+            var canvasRect = canvas.getBoundingClientRect();
+            var x = event.clientX - canvasRect.left;
+            var y = event.clientY - canvasRect.top;
+            currentBlueprintPoints.push({ x: x, y: y });
+            drawBlueprint(currentBlueprintPoints);
+        }
     });
 
-    // Exponer métodos públicos
+    getBlueprintsButton.addEventListener('click', function () {
+        var authorName = authorNameInput.value;
+        updateBlueprintsList(authorName).catch(function (error) {
+            console.error("Error fetching blueprints: " + error);
+        });
+    });
+
+    saveUpdateButton.addEventListener('click', function () {
+        if (selectedAuthor && currentBlueprintName && currentBlueprintPoints.length > 0) {
+            var updatedBlueprint = {
+                name: currentBlueprintName,
+                author: selectedAuthor,
+                points: currentBlueprintPoints
+            };
+            var saveOrUpdatePromise;
+            var blueprintNames = Array.from(document.querySelectorAll('table tbody tr td:first-child')).map(function (cell) {
+                return cell.textContent;
+            });
+            if (blueprintNames.includes(currentBlueprintName)) {
+                saveOrUpdatePromise = api.updateBlueprint(selectedAuthor, currentBlueprintName, updatedBlueprint);
+            } else {
+                saveOrUpdatePromise = api.createBlueprint(updatedBlueprint);
+            }
+            saveOrUpdatePromise
+                .then(function () {
+                    return updateBlueprintsList(selectedAuthor);
+                })
+                .then(function () {
+                    console.log("Blueprint saved/updated successfully");
+                })
+                .catch(function (error) {
+                    console.error("Error saving/updating blueprint: " + error);
+                });
+        }
+    });
+
+    createBlueprintButton.addEventListener('click', function () {
+        if (selectedAuthor === ""|| totalPointsElement.textContent === 'Author not found') {
+            alert("Blueprint name already exists. Please choose another name.");
+        } else {
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            currentBlueprintPoints = [];
+            var uniqueName = false;
+            var newBlueprintName;
+            while (!uniqueName) {
+                newBlueprintName = prompt("Enter the name of the new blueprint:");
+                if (!newBlueprintName) {
+                    return;
+                }
+
+                var blueprintNames = Array.from(document.querySelectorAll('table tbody tr td:first-child')).map(function (cell) {
+                    return cell.textContent;
+                });
+
+                if (!blueprintNames.includes(newBlueprintName)) {
+                    uniqueName = true;
+                } else {
+                    alert("Blueprint name already exists. Please choose another name.");
+                }
+            }
+            currentBlueprintName = newBlueprintName;
+            if (!blueprintNameField) {
+                blueprintNameField = document.createElement('p');
+                blueprintNameField.id = 'blueprintName';
+                rightPanel.appendChild(blueprintNameField);
+            }
+            blueprintNameField.textContent = '';
+        }
+    });
+
+    var deleteBlueprintButton = document.getElementById('deleteBlueprintButton');
+
+    deleteBlueprintButton.addEventListener('click', function () {
+        if (selectedAuthor && currentBlueprintName) {
+            var deleteConfirmation = confirm('Are you sure you want to delete this blueprint?');
+            if (deleteConfirmation) {
+                deleteBlueprint(selectedAuthor, currentBlueprintName)
+                    .then(function () {
+                        return updateBlueprintsList(selectedAuthor);
+                    })
+                    .then(function () {
+                        blueprintNameField.textContent = '';
+                        console.log('Blueprint deleted successfully');
+                    })
+                    .catch(function (error) {
+                        console.error('Error deleting blueprint: ' + error);
+                    });
+            }
+        }
+    });
+
+    function deleteBlueprint(author, bpname) {
+        return new Promise(function (resolve, reject) {
+            api.deleteBlueprint(author, bpname)
+                .then(function () {
+                    resolve();
+                })
+                .catch(function (error) {
+                    reject(error);
+                });
+        });
+    }
+
     return {
         setAuthorName: setAuthorName,
         updateBlueprintsList: updateBlueprintsList,

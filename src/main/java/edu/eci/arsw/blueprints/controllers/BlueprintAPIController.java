@@ -61,6 +61,7 @@ public class BlueprintAPIController {
         }
     }
 
+    //$ curl -X POST --location "http://localhost:8080/blueprints" -H "Accept: application/json" -H "Content-Type: application/json" -d "{\"author\":\"Rojas\",\"points\":[{\"x\":10,\"y\":0},{\"x\":30,\"y\":20}],\"name\":\"Blueprint 4\"}"
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<?> addNewBlueprint(@RequestBody Blueprint newBp){
         try {
@@ -72,6 +73,7 @@ public class BlueprintAPIController {
         }
     }
 
+    //$ curl -X PUT --location "http://localhost:8080/blueprints/Sebas/Blueprint%201" -H "Accept: application/json" -H "Content-Type: application/json" -d "{\"author\":\"Sebas\",\"points\":[{\"x\":0,\"y\":0},{\"x\":0,\"y\":0}],\"name\":\"Blueprint 1\"}"
     @RequestMapping(method = RequestMethod.PUT, path = "{authorName}/{bpName}")
     public ResponseEntity<?> setBlueprint(@PathVariable String authorName, @PathVariable String bpName, @RequestBody Blueprint setNBp) {
         try {
@@ -82,6 +84,19 @@ public class BlueprintAPIController {
             return new ResponseEntity<>("<strong>Error 404:</strong> No se ha encontrado un Blueprint <strong>" + bpName + "</strong> para el autor <strong>" + authorName+ "</strong>", HttpStatus.NOT_FOUND);
         }
     }
+
+    //$ curl -X DELETE "http://localhost:8080/blueprints/Andres/Blueprint%201"
+    @RequestMapping(method = RequestMethod.DELETE, path = "{authorName}/{bpName}")
+    public ResponseEntity<?> deleteBlueprint(@PathVariable String authorName, @PathVariable String bpName) {
+        try {
+            bps.deleteBlueprint(authorName, bpName);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (BlueprintNotFoundException ex) {
+            Logger.getLogger(BlueprintAPIController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity<>("<strong>Error 404:</strong> No se ha encontrado un Blueprint <strong>" + bpName + "</strong> para el autor <strong>" + authorName + "</strong>", HttpStatus.NOT_FOUND);
+        }
+    }
+
 
 
 
